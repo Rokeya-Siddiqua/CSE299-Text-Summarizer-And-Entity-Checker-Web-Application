@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer & Entity Checker</title>
+</head>
+<body>    
+    <!-- files showing-->
+    <form action="/downloadList" method="post">
+        <div class="input-field col s12">
+            <label>Select a file</label><br>
+            <select name="List">
+              <option value="" disabled selected>Choose your option</option>
+              <option value="yourdocument20210417-001040.txt">yourdocument20210417-001040.txt</option>
+              <option value="yourdocument20210417-001040.txt">yourdocument20210417-001040.txt</option>
+              <option value="yourdocument20210417-001040.txt">yourdocument20210417-001040.txt</option>
+            </select>
+          </div>
+          <button class="btn btn-small waves-effect waves-light purple lighten-1" type="submit">Save</button>
+
+          <br><br>
+          <div>
+            <p>{{ info }}</p>
+           </div>
+    </form>
+    <!--  Scripts-->
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="static/js/materialize.js"></script>
+    <script src="static/js/init.js"></script>
+    <script>
+          document.addEventListener('DOMContentLoaded', function() {
+              var elems = document.querySelectorAll('select');
+              var instances = M.FormSelect.init(elems, options);
+            });
+    </script>
+
+</body>
+</html>

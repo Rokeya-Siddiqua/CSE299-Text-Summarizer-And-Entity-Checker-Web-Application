@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request, url_for
+import requests
 import time
 
 #sumy summary package
@@ -32,15 +33,6 @@ import joblib
 import os
 import matplotlib
 
-#from sklearn.naive_bayes import MultinomialNB
-
-#import six
-#import sys
-#sys.modules['sklearn.externals.six'] = six
-#import mlrose
-#sys.modules['sklearn.externals.joblib'] = joblib
-
-#wordcloud
 
 # Load Our CountVectorizer
 text_vectorizer = open("models/final_news_cv_vectorizer.pkl","rb")
@@ -69,26 +61,40 @@ import io
 
 # Web Scraping Pkg
 from bs4 import BeautifulSoup
-from urllib.request import urlopen  
+#from urllib.request import urlopen  
 
 app = Flask(__name__)
 
 # Function for Sumy Summarization
-def sumy_summarizer(docx):
+def sumy_summarizer(docx,summaryLine):
 	parser = PlaintextParser.from_string(docx,Tokenizer("english"))
 	lex_summarizer = LexRankSummarizer()
-	summary = lex_summarizer(parser.document,3)
+	summary = lex_summarizer(parser.document,summaryLine)
 	summary_list = [str(sentence) for sentence in summary]
 	result = ' '.join(summary_list)
 	return result
 
 
+# Fetch Text From Url different way
+#def get_text(raw_url):
+#	page = urlopen(url=raw_url)
+#	soup = BeautifulSoup(page)
+#	fetched_text = ' '.join(map(lambda p:p.text,soup.find_all('p')))
+#	return fetched_text
+
+
 # Fetch Text From Url
 def get_text(raw_url):
-	page = urlopen(url=raw_url)
-	soup = BeautifulSoup(page)
-	fetched_text = ' '.join(map(lambda p:p.text,soup.find_all('p')))
-	return fetched_text
+    req_obj = requests.get(raw_url)
+    fullText = req_obj.text
+    soup = BeautifulSoup(fullText)
+    #all_paras = soup.find_all("p")
+    #wiki_text = ''
+    #for para in all_paras:
+    #    wiki_text += para.text 
+    #return wiki_text
+    fetched_text = ' '.join(map(lambda p:p.text,soup.find_all('p')))
+    return fetched_text
 
 
 # Reading Time
@@ -98,20 +104,22 @@ def readingTime(mytext):
     estimatedTime = total_words/200.0
     return estimatedTime
 
-#function for pdf to text converter
-def pdf2txt(inPDFfile, outTXTfile):
-    inputFile = open(inPDFfile, 'rb')
-    resourceManager = PDFResourceManager
-    returnData = io.StringIO()
-    textConverter = TextConverter(resourceManager, returnData, laparams=LAParams())
-    interpreter = PDFPageInterpreter(resourceManager, textConverter)
-    #process each page in pdf file
-    for page in PDFPage.get_pages(inputFile):
-        interpreter.process_page(page)
-    
-    txt = returnData.getvalue()
+#######################  summarized text save and download list start ###########################
+# save file package
+import base64
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
+#template
+HTML_WRAPPER = """<div style="overflow-x: auto; border: 1px solid #e6e9ef; border-radius: 0.25rem; padding: 1rem">{}</div>"""
+file_name = 'yourdocument' + timestr + '.txt'
 
 
+def writetofile(text,file_name):
+	with open(os.path.join('downloads',file_name),'w') as f:
+		f.write(text)
+	return file_name
+
+#########################  summarized text save and download list end ###########################
 
 @app.route("/")
 def home():
@@ -124,12 +132,15 @@ def analyze():
     start = time.time()
     if request.method == 'POST':
         rawtext = request.form['rawtext']
+        summaryLine = request.form['lineSlider']
         final_reading_time = readingTime(rawtext)
-        final_summary = sumy_summarizer(rawtext)
+        final_summary = sumy_summarizer(rawtext,summaryLine)
         summary_reading_time = readingTime(final_summary)
         end = time.time()
         final_time = end-start
-    return render_template("homePage.html", ctext = rawtext, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+        lengthSummary=len(final_summary)
+        lengthText=len(rawtext)
+    return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = rawtext, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
 
 
 
@@ -139,13 +150,17 @@ def analyze_url():
     start = time.time()
     if request.method == 'POST':
          raw_url = request.form['raw_url']
+         summaryLine = request.form['lineSlider']
+         #rawtext = get_text(raw_url)
          rawtext = get_text(raw_url)
          final_reading_time = readingTime(rawtext)
-         final_summary = sumy_summarizer(rawtext)
+         final_summary = sumy_summarizer(rawtext,summaryLine)
          summary_reading_time = readingTime(final_summary)
          end = time.time()
          final_time = end-start
-         return render_template("homePage.html", ctext = rawtext, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+         lengthSummary=len(final_summary)
+         lengthText=len(rawtext)
+         return render_template("homePage.html", lengthSummary=lengthSummary, lengthText=lengthText, ctext = rawtext, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
 
 
 #summary compare
@@ -153,7 +168,7 @@ def analyze_url():
 def compareSummary():
     return render_template("compareSummaries.html")
 
-
+#compare from text
 @app.route('/comparer',methods=['GET','POST'])
 def comparer():
     start = time.time()
@@ -165,18 +180,47 @@ def comparer():
         summary_reading_time = readingTime(final_summary_spacy)
         # Gensim Summarizer
         # #final_summary_gensim = summarize(rawtext)
-        final_summary_gensim = sumy_summarizer(rawtext)
+        final_summary_gensim = sumy_summarizer(rawtext,3)
         summary_reading_time_gensim = readingTime(final_summary_gensim)
 		# NLTK Summarizer
         final_summary_nltk = nltk_summarizer(rawtext)
         summary_reading_time_nltk = readingTime(final_summary_nltk)
 		# Sumy Summarizer
-        final_summary_sumy = sumy_summarizer(rawtext)
+        final_summary_sumy = sumy_summarizer(rawtext,3)
         summary_reading_time_sumy = readingTime(final_summary_sumy)
         
         end = time.time()
         final_time = end-start
         return render_template('compareSummaries.html',ctext=rawtext,final_summary_spacy=final_summary_spacy,final_summary_gensim=final_summary_gensim,final_summary_nltk=final_summary_nltk,final_time=final_time,final_reading_time=final_reading_time,summary_reading_time=summary_reading_time,summary_reading_time_gensim=summary_reading_time_gensim,final_summary_sumy=final_summary_sumy,summary_reading_time_sumy=summary_reading_time_sumy,summary_reading_time_nltk=summary_reading_time_nltk)
+
+
+#compare from url
+@app.route('/comparerURL',methods=['GET','POST'])
+def comparerURL():
+    start = time.time()
+    if request.method == 'POST':
+        raw_url = request.form['raw_url']
+        rawtext = get_text(raw_url)
+        final_reading_time = readingTime(rawtext)
+        #spacy Summarizer
+        final_summary_spacy = text_summarizer(rawtext)
+        summary_reading_time = readingTime(final_summary_spacy)
+        # Gensim Summarizer
+        # #final_summary_gensim = summarize(rawtext)
+        final_summary_gensim = sumy_summarizer(rawtext,3)
+        summary_reading_time_gensim = readingTime(final_summary_gensim)
+		# NLTK Summarizer
+        final_summary_nltk = nltk_summarizer(rawtext)
+        summary_reading_time_nltk = readingTime(final_summary_nltk)
+		# Sumy Summarizer
+        final_summary_sumy = sumy_summarizer(rawtext,3)
+        summary_reading_time_sumy = readingTime(final_summary_sumy)
+        
+        end = time.time()
+        final_time = end-start
+        return render_template('compareSummaries.html',ctext=rawtext,final_summary_spacy=final_summary_spacy,final_summary_gensim=final_summary_gensim,final_summary_nltk=final_summary_nltk,final_time=final_time,final_reading_time=final_reading_time,summary_reading_time=summary_reading_time,summary_reading_time_gensim=summary_reading_time_gensim,final_summary_sumy=final_summary_sumy,summary_reading_time_sumy=summary_reading_time_sumy,summary_reading_time_nltk=summary_reading_time_nltk)
+
+
 
 ##################################  text classification start ###########################
 #Text type
@@ -185,7 +229,7 @@ def textType():
     return render_template("textClassifier.html")
 
 
-# classify text
+# classify from text
 @app.route('/classify',methods=['GET','POST'])
 def classify():
     start = time.time()
@@ -229,8 +273,275 @@ def classify():
         final_time = end-start
         return render_template('textClassifier.html',ctext=rawtext,finalResultLR=finalResultLR,finalResultRF=finalResultRF,finalResultDT=finalResultDT,finalResultNB=finalResultNB,final_time=final_time,final_reading_time=final_reading_time)
 
+# classify from URL
+@app.route('/classifyURL',methods=['GET','POST'])
+def classifyURL():
+    start = time.time()
+    if request.method == 'POST':
+        raw_url = request.form['raw_url']
+        rawtext = get_text(raw_url)
+        final_reading_time = readingTime(rawtext)
+        prediction_labels = {'business':0,'tech':1,'sport':2,'health':3,'politics':4,'entertainment':5,'crime':6,'weather forecast':7}
+        vect_text = text_countVectorizer.transform([rawtext]).toarray()
+    
+        # Logistic Regression Classifier
+        predictorLR = load_prediction_models("models/newsclassifier_Logit_model.pkl")
+        predictionLR = predictorLR.predict(vect_text)
+        finalResultLR = get_keys(predictionLR,prediction_labels)
+        # st.write(predictionLR)
+
+        # Random Forest Classifier
+        predictorRF = load_prediction_models("models/newsclassifier_RFOREST_model.pkl")
+        predictionRF = predictorRF.predict(vect_text)
+        finalResultRF = get_keys(predictionRF,prediction_labels)
+        # st.write(predictionRF)
+
+		# Decision Tree Classifier
+        predictorDT = load_prediction_models("models/newsclassifier_CART_model.pkl")
+        predictionDT = predictorDT.predict(vect_text)
+        finalResultDT = get_keys(predictionDT,prediction_labels)
+        # st.write(predictionDT)
+
+		# Naive Bayes Classifier
+        predictorNB = load_prediction_models("models/newsclassifier_NAIVEBAYES_model.pkl")
+        predictionNB = predictorNB.predict(vect_text)
+        finalResultNB = get_keys(predictionNB,prediction_labels)
+        # st.write(predictionNB)
+        
+        end = time.time()
+        final_time = end-start
+        return render_template('textClassifier.html',ctext=rawtext,finalResultLR=finalResultLR,finalResultRF=finalResultRF,finalResultDT=finalResultDT,finalResultNB=finalResultNB,final_time=final_time,final_reading_time=final_reading_time)
 
 ##################################  text classification end ###########################
+def make_downloadable(filename):
+	readfile = open(os.path.join("downloads",filename)).read()
+	b64 = base64.b64encode(readfile.encode()).decode()
+	href = 'Download File File (right-click and save as <some_name>.txt)'.format(b64)
+	return href
+
+#summarized text save
+@app.route("/save", methods=['POST', 'GET'])
+def save():
+    if request.method == 'POST':
+        rawtext = request.form['rawtext']
+        final_summary = sumy_summarizer(rawtext,3)
+        file_to_download = writetofile(rawtext,file_name)
+        info = "Saved Result As :: {}".format(file_name)
+        #d_link = make_downloadable(file_to_download)
+        #st.markdown(d_link,unsafe_allow_html=True)
+        make_downloadable(file_to_download)
+        return render_template('homePage.html',info=info)
+
+
+#Download List
+@app.route("/downloadListPage")
+def downloadListPage():
+    return render_template("downloadListPage.html")
+
+
+#Download List download button
+@app.route("/downloadList", methods=['POST', 'GET'])
+def downloadList():
+    files = os.listdir(os.path.join('downloads'))
+    if request.method == 'POST':
+        selectedDownloadList = request.form['List']
+        file_to_download = selectedDownloadList
+        final_summary= "final summary"
+        writetofile(final_summary,selectedDownloadList)
+        info = "File Name: {}".format(file_to_download)
+        make_downloadable(file_to_download)
+#    d_link = make_downloadable(file_to_download)
+    #st.markdown(d_link,unsafe_allow_html=True)
+    return render_template("downloadListPage.html", info=info)
+#st.selectbox("Select File To Download",files)
+
+#copy text
+@app.route('/copy')
+def copy():
+    return render_template("homePage.html")
+
+
+##################################  image to text conversion start ###########################
+#using easyOCR
+#import easyocr
+#reader = easyocr.Reader(['en','en'])
+#results = reader.readtext("a.jpg")
+#text = ""
+#for result in results:
+#    text = text + result[1] + ""
+#print(text)
+
+#using pytesseract
+import pytesseract as tess
+tess.pytesseract.tesseract_cmd = r'E:\Soft\Tesseract for cse299 project\tesseract.exe'
+from PIL import Image
+from flask import  redirect
+
+app.config["IMAGE_UPLOADS"] = ".\images"
+
+#image to text
+@app.route('/picture', methods=['POST', 'GET'])
+def picture():
+    start = time.time()
+    if request.method == 'POST' and 'photo' in request.files:
+        image  = request.files['photo']
+        #return redirect(request.url)
+        image.save(os.path.join(app.config["IMAGE_UPLOADS"], image.filename))
+        
+        # text extract from image
+        img = Image.open(os.path.join(app.config["IMAGE_UPLOADS"], image.filename))
+        imageText = tess.image_to_string(img)
+        #print(text5)
+
+        #summary
+        summaryLine = request.form['lineSlider']
+        final_reading_time = readingTime(imageText)
+        final_summary = sumy_summarizer(imageText,summaryLine)
+        summary_reading_time = readingTime(final_summary)
+        end = time.time()
+        final_time = end-start
+        lengthSummary=len(final_summary)
+        lengthText=len(imageText)
+        return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = imageText, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+
+
+##################################  image to text conversion end ###########################
+##################################  speech to text conversion start ###########################
+from ibm_watson import SpeechToTextV1
+from ibm_watson.websocket import RecognizeCallback, AudioSource 
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+
+#API
+apikey = '8cAmRWVWBYc2xFs58iel7LMn23SUQ-Jbe5ah7lTM16bI'
+url = 'https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/1fd7f17a-8e9e-4436-8482-96400546110a'
+
+# Setup Service
+authenticator = IAMAuthenticator(apikey)
+stt = SpeechToTextV1(authenticator=authenticator)
+stt.set_service_url(url)
+
+# speech to text
+@app.route('/audio', methods=['POST', 'GET'])
+def audio():
+    start = time.time()
+    if request.method == 'POST' and 'audio' in request.files:
+        audioFile  = request.files['audio']
+        #return redirect(request.url)
+        audioFile.save(os.path.join(app.config["IMAGE_UPLOADS"], audioFile.filename))
+       
+        #audio open
+        #Perform conversion
+        with open(os.path.join(app.config["IMAGE_UPLOADS"], audioFile.filename), 'rb') as f:
+            res = stt.recognize(audio=f, content_type='audio/mp3', model='en-US_NarrowbandModel', continuous=True).get_result()
+        audioText = res['results'][0]['alternatives'][0]['transcript']
+        #print(text)
+
+        #summary
+        summaryLine = request.form['lineSlider']
+        final_reading_time = readingTime(audioText)
+        final_summary = sumy_summarizer(audioText,summaryLine)
+        summary_reading_time = readingTime(final_summary)
+        end = time.time()
+        final_time = end-start
+        lengthSummary=len(final_summary)
+        lengthText=len(audioText)
+        return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = audioText, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+
+
+# Perform conversion
+#with open('hello.mp3', 'rb') as f:
+#    res = stt.recognize(audio=f, content_type='audio/mp3', model='en-US_NarrowbandModel', continuous=True).get_result()
+
+
+#text = res['results'][0]['alternatives'][0]['transcript']
+#print(text)
+#confidence = res['results'][0]['alternatives'][0]['confidence']
+
+#output text file
+#with open('output.txt', 'w') as out:
+#    out.writelines(text)
+
+# Perform australian conversion
+#with open('hello.mp3', 'rb') as f:
+#    res = stt.recognize(audio=f, content_type='audio/mp3', model='en-AU_NarrowbandModel', continuous=True).get_result()
+
+#text1 = res['results'][0]['alternatives'][0]['transcript']
+#print(text1)
+
+# Perform united kingdom conversion
+#with open('hello.mp3', 'rb') as f:
+#    res = stt.recognize(audio=f, content_type='audio/mp3', model='en-GB_NarrowbandModel', continuous=True).get_result()
+
+#text2 = res['results'][0]['alternatives'][0]['transcript']
+#print(text2)
+
+##################################  speech to text conversion end ###########################
+##################################  pdf to text conversion start ###########################
+import PyPDF2
+
+app.config["IMAGE_UPLOADS"] = ".\images"
+
+# pdf to text
+@app.route('/pdf', methods=['POST', 'GET'])
+def pdf():
+    start = time.time()
+    if request.method == 'POST':
+        if 'pdf' in request.files:
+            pdfFile  = request.files['pdf']
+            #return redirect(request.url)
+            pdfFile.save(os.path.join(app.config["IMAGE_UPLOADS"], pdfFile.filename))
+
+            #pdf open
+            a = PyPDF2.PdfFileReader(os.path.join(app.config["IMAGE_UPLOADS"], pdfFile.filename))
+            pdfText= " "
+            r = a.getNumPages()
+            for i in range(0,r):
+                pdfText += a.getPage(i).extractText()
+                #print(pdfText)
+
+            #with open("text.txt", "w" ) as f:
+            #    f.write(pdfText)
+
+        #summary
+        summaryLine = request.form['lineSlider']
+        final_reading_time = readingTime(pdfText)
+        final_summary = sumy_summarizer(pdfText,summaryLine)
+        summary_reading_time = readingTime(final_summary)
+        end = time.time()
+        final_time = end-start
+        lengthSummary=len(final_summary)
+        lengthText=len(pdfText)
+        return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = pdfText, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+
+##################################  pdf to text conversion end ###########################
+import docx
+
+app.config["IMAGE_UPLOADS"] = ".\images"
+
+# doc to text
+@app.route('/doc', methods=['POST', 'GET'])
+def doc():
+    start = time.time()
+    if request.method == 'POST':
+        if 'doc' in request.files:
+            docFile  = request.files['doc']
+            #return redirect(request.url)
+            docFile.save(os.path.join(app.config["IMAGE_UPLOADS"], docFile.filename))
+
+            docOpen = docx.Document(os.path.join(app.config["IMAGE_UPLOADS"], docFile.filename))
+            docText = docOpen.paragraphs[0].text
+
+        #summary
+        summaryLine = request.form['lineSlider']
+        final_reading_time = readingTime(docText)
+        final_summary = sumy_summarizer(docText,summaryLine)
+        summary_reading_time = readingTime(final_summary)
+        end = time.time()
+        final_time = end-start
+        lengthSummary=len(final_summary)
+        lengthText=len(docText)
+        return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = docText, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
