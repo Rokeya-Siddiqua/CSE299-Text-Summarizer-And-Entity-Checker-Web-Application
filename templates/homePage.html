@@ -202,6 +202,25 @@
 
   </form>
 </div>
+<br><br>
+<!--video to text-->
+<div style="text-align: center;" class="text-center">
+  <h1 style="font-size: 30px;">UPLOAD VIDEO BELOW</h1>
+  <form method="POST" enctype="multipart/form-data" action="/video">
+      <input type="file" class="btn btn-dark" name="video"><br><br>
+      <input type = 'submit' class="btn btn-dark" >
+
+      <br><br>
+    <div style="text-align: center; width: 60%;">
+      <p class="range-field">
+        <input type="range" name="lineSlider" id="line" min="1" max="50" value="25" />
+        <label style="font-size: 20px; font-weight: bold;" for="">Select line limit</label>
+
+      </p>
+    </div>
+
+  </form>
+</div>
         </div>
       </div>
       <!-- End -->

@@ -24,8 +24,6 @@ class DevelopmentConfig(Config):
 
     IMAGE_UPLOADS = "D:\4th Year\CSE299\hello_flask\images"
 
-    AUDIO_UPLOADS = "D:\4th Year\CSE299\hello_flask\audio"
-
     SESSION_COOKIE_SECURE = False
 
 class TestingConfig(Config):

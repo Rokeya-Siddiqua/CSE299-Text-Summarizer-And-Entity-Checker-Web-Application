@@ -9,7 +9,7 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lex_rank import LexRankSummarizer
 
-#sumy summary package
+#spacy summary package
 import spacy
 from spacy import displacy
 nlp = spacy.load('en_core_web_sm')
@@ -20,6 +20,12 @@ import nltk
 nltk.download('punkt')
 nltk.download('stopwords')
 from nltk.nltk_summarization import nltk_summarizer
+
+# libraries for nltk and tdifd vectorizer
+from nltk.nltk_tfidf_summarization import sent_tokenize, _create_frequency_matrix,  _create_tf_matrix, _create_documents_per_words,  _create_idf_matrix,  _create_tf_idf_matrix,  _score_sentences,  _find_average_score,  _generate_summary, word_drop
+import math
+from nltk import sent_tokenize, word_tokenize, PorterStemmer
+from nltk.corpus import stopwords 
 
 #gensim summary package
 #from gensim.summarization import summarize
@@ -161,8 +167,8 @@ def analyze_url():
          lengthSummary=len(final_summary)
          lengthText=len(rawtext)
          return render_template("homePage.html", lengthSummary=lengthSummary, lengthText=lengthText, ctext = rawtext, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
-
-
+import re
+import string
 #summary compare
 @app.route("/compareSummary")
 def compareSummary():
@@ -174,16 +180,27 @@ def comparer():
     start = time.time()
     if request.method == 'POST':
         rawtext = request.form['rawtext']
+        rawtext1 = word_drop(rawtext)
         final_reading_time = readingTime(rawtext)
         #spacy Summarizer
-        final_summary_spacy = text_summarizer(rawtext)
+        final_summary_spacy = text_summarizer(rawtext1)
         summary_reading_time = readingTime(final_summary_spacy)
         # Gensim Summarizer
         # #final_summary_gensim = summarize(rawtext)
-        final_summary_gensim = sumy_summarizer(rawtext,3)
+        final_summary_gensim = sumy_summarizer(rawtext1,3)
         summary_reading_time_gensim = readingTime(final_summary_gensim)
 		# NLTK Summarizer
-        final_summary_nltk = nltk_summarizer(rawtext)
+        sentences = sent_tokenize(rawtext1)
+        total_documents = len(sentences)
+        freq_matrix = _create_frequency_matrix(sentences)
+        tf_matrix = _create_tf_matrix(freq_matrix)
+        count_doc_per_words = _create_documents_per_words(freq_matrix)
+        idf_matrix = _create_idf_matrix(freq_matrix, count_doc_per_words, total_documents)
+        tf_idf_matrix = _create_tf_idf_matrix(tf_matrix, idf_matrix)
+        sentence_scores = _score_sentences(tf_idf_matrix)
+        threshold = _find_average_score(sentence_scores)
+        final_summary_nltk = _generate_summary(sentences, sentence_scores, 1.1 * threshold)
+        #final_summary_nltk = nltk_summarizer(rawtext)
         summary_reading_time_nltk = readingTime(final_summary_nltk)
 		# Sumy Summarizer
         final_summary_sumy = sumy_summarizer(rawtext,3)
@@ -313,6 +330,7 @@ def classifyURL():
         return render_template('textClassifier.html',ctext=rawtext,finalResultLR=finalResultLR,finalResultRF=finalResultRF,finalResultDT=finalResultDT,finalResultNB=finalResultNB,final_time=final_time,final_reading_time=final_reading_time)
 
 ##################################  text classification end ###########################
+
 def make_downloadable(filename):
 	readfile = open(os.path.join("downloads",filename)).read()
 	b64 = base64.b64encode(readfile.encode()).decode()
@@ -476,6 +494,50 @@ def audio():
 #print(text2)
 
 ##################################  speech to text conversion end ###########################
+
+##################################  video to text conversion start ###########################
+
+#moviepy helps to convert video to audio file
+from moviepy.editor import *
+
+# video to text
+@app.route('/video', methods=['POST', 'GET'])
+def video():
+    start = time.time()
+    if request.method == 'POST' and 'video' in request.files:
+        videoFile  = request.files['video']
+        #return redirect(request.url)
+        videoFile.save(os.path.join(app.config["IMAGE_UPLOADS"], videoFile.filename))
+        
+        # comvert video to audio file
+        mp4_file = os.path.join(app.config["IMAGE_UPLOADS"], videoFile.filename)
+        mp3_file = "images/audio.mp3"
+        videoclip = VideoFileClip(mp4_file)
+        audioclip = videoclip.audio
+        audioclip.write_audiofile(mp3_file)
+        
+
+        with open("images/audio.mp3", 'rb') as f:
+            res = stt.recognize(audio=f, content_type='audio/mp3', model='en-US_NarrowbandModel', continuous=True).get_result()
+        videoText = res['results'][0]['alternatives'][0]['transcript']
+        
+
+        #summary
+        summaryLine = request.form['lineSlider']
+        final_reading_time = readingTime(videoText)
+        final_summary = sumy_summarizer(videoText,summaryLine)
+        summary_reading_time = readingTime(final_summary)
+        end = time.time()
+        final_time = end-start
+        lengthSummary=len(final_summary)
+        lengthText=len(videoText)
+        audioclip.close()
+        videoclip.close()
+        return render_template("homePage.html",lengthText=lengthText,lengthSummary=lengthSummary, ctext = videoText, final_summary = final_summary, final_time = final_time, final_reading_time = final_reading_time, summary_reading_time = summary_reading_time)
+
+##################################  video to text conversion end ###########################
+
+
 ##################################  pdf to text conversion start ###########################
 import PyPDF2
 
