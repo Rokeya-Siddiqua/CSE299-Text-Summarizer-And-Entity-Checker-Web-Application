@@ -11,23 +11,103 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
     <link href="static/css/homeStyle.css" rel="stylesheet">
+<style>	
+ 
+footer{
+    background-color: #111;
+    height: auto;
+    font-family: Arial, Helvetica, sans-serif;
+    padding-top: 40px ;
+    color: white;
+  }
+.footer-content{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center ;
+}
+  
+.footer-content h3{
+  font-size: 1.8rem;
+  font-weight: 400;
+  text-transform: capitalize;
+  line-height: 3rem;
+ 
 
+}
+
+.footer-content p{
+	max-width:500px;
+	margin:10px auto;
+	line-height:28px;
+	font-size:14px;
+   
+}
+.socials{
+	list-style: none;
+	display:flex;
+	align-items: center;
+	justify-content: center;
+	
+}
+
+.socials li{
+	margin: 0 10px;
+	align-items: center;
+	
+}
+.socials a{
+	text-decoration:none;
+	color: white;	
+}
+.socials a i{
+	font-size:1.1rem;
+}
+.socials a:hover i{
+	color:blue;
+}
+.footer-bottom{
+	background:#000;
+	width:100vw;
+	padding:10px 0;
+	text-align: center;
+	
+}
+.footer-bottom p{
+	font-size: 14px;
+	word-spacing:2px;
+	text-align: center;
+	text-transform:capitalize;
+
+}
+
+.footer-bottom span{
+	text-transform: uppercase;
+	opacity: .4;
+	font-weight: 200;
+}
+
+</style>
 </head>
 <body>
   
     <div style="background-color: #8b8484; font-size: 30px;" class="navbar-fixed">
         <nav style="width: 100%;" class="grey darken-4" role="navigation">
-         <div style="width: 40%; float: left;" class="nav-wrapper container">
-          <a style="float: left; margin-right: 15px; color: white;" href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+         <div style="width: 20%; float: left;" class="nav-wrapper container">
+          <a style="float: left; margin-right: 1px; color: white;" href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
            <a id="logo-container" href="#" class="brand-logo" style="color: white;">Summaryzer</a>
             </div>
           <div>
             <ul style="list-style-type: none;" class="right hide-on-med-and-down">
-              <li style="margin-left: 20px;"><a href="{{url_for('home')}}">Home</a></li>
-               <li style="margin-left: 20px;"><a href="{{url_for('compareSummary')}}">Compare Summarizers</a></li>
-               <li style="margin-left: 20px;"><a href="{{url_for('textType')}}">Text Classifier</a></li>
-               <li style="margin-left: 20px;"><a href="{{url_for('downloadListPage')}}">Download List</a></li>
-               <li style="margin-left: 20px;"><a href="#aboutapp">About</a></li>
+              <li style="margin-left: 5px;"><a href="{{url_for('Main_home')}}">Home</a></li>
+              
+              <li style="margin-left: 5px;"><a href="{{url_for('home')}}">Summarizer</a></li>
+               <li style="margin-left: 5px;"><a href="{{url_for('compareSummary')}}">Compare Summarizers</a></li>
+               <li style="margin-left: 5px;"><a href="{{url_for('textType')}}">Text Classifier</a></li>
+               <li style="margin-left: 5px;"><a href="{{url_for('wordinfo')}}">Token information</a></li>
+               <li style="margin-left: 5px;"><a href="{{url_for('index_saima')}}">Entity Checker</a></li>
+              <li style="margin-left: 5px;"><a href="https://drive.google.com/file/d/1EmRrHQ2VPFoUMnOxgCJyyRh-iUElbowC/view?usp=sharing">Guideline</a></li>
             </ul>
            </div>
          
@@ -35,11 +115,15 @@
      </div>
      <ul style="list-style-type: none; background-color: black;" id="nav-mobile" class="sidenav">
         <li><h2></h2></li>
-        <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('home')}}">Home</a></li>
+        <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('Main_home')}}">Home</a></li>
+
+        <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('home')}}">Summarizer</a></li>
          <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('compareSummary')}}">Compare</a></li>
          <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('textType')}}">Text Classifier</a></li>
-         <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('downloadListPage')}}">Download List</a></li>
-         <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="#contactme">About</a></li>
+         <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('wordinfo')}}">Token information</a></li>
+        <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('basic_api')}}"> Token information using API</a></li><br>
+        <br><li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="{{url_for('index_saima')}}">Entity Checker</a></li>
+          <li><a style="color: white; font-size: 25px; font-weight: bold ;font-family: 'Times New Roman', Times, serif" href="https://drive.google.com/file/d/1EmRrHQ2VPFoUMnOxgCJyyRh-iUElbowC/view?usp=sharing">Guideline</a></li>
       </ul>
       <!--Slider -->
       <section class="slider">
@@ -82,7 +166,7 @@
             <div class="input-field col s12 m10">
               <div class="icon-block">
                 <h2 class="center brown-text"><i class="material-icons">chrome_reader_mode</i></h2>
-               <form method="POST" action="/analyze">
+               <form method="POST" action="/analyze_summary">
              <textarea style="width: 60%;" id="rawtext" name="rawtext" cols="5" rows="10" class="form-control" required="true" placeholder="Enter Text Here"></textarea>
               
              <br/>
@@ -282,17 +366,15 @@
          </form>
 
          
-       </div>
+       </div> <br> <br>
        
  
-       <footer style="clear: both;" class="page-footer grey darken-4">
+      <!--  <footer style="clear: both;" class="page-footer grey darken-4">
         <div class="container" id="aboutapp">
           <div class="row">
             <div class="col l6 s12">
               <h5 class="white-text">About Summary App</h5>
-              <p class="grey-text text-lighten-4">Using Spacy,NLTk and Gensim for Text Summarization
-    .</p>
-    
+              <p class="grey-text text-lighten-4">Using Spacy,NLTk and Gensim for Text Summarization.</p>
     
             </div>
           
@@ -315,7 +397,36 @@
             </div>
           </div>
         </div>
-      </footer>
+      </footer>-->
+        <!-- Footer start -->
+		<footer>
+		<div class = "footer-content">
+		<h3 style="Arial, Helvetica, sans-serif">SUMMARIZE KORO</h3>
+		<p style="Arial, Helvetica, sans-serif"> A web application for Text Summarization, Entity Check & Word Information & <br> it is build with NLP and ML.</p>
+		<ul class = "socials">
+		<li><a href="https://facebook.com/jcharistech" target="_blank" class="white-text" ><i class="fab fa-facebook fa-4x"></i></a></li>
+		<li><a href="https://facebook.com/jcharistech" target="_blank" class="white-text"><i class="fab fa-twitter fa-4x"></i></a></li>
+		<li><a href="https://github.com/rokeya/" target="_blank" class="white-text"><i class="fab fa-github-square fa-4x"></i></a></li>
+		<li><a href="https://gh.linkedin.com/in/jesiel-emmanuel-agbemabiase-6935b690" target="_blank" class="white-text"><i class="fab fa-linkedin fa-4x"></i></a> </li>
+		<li><a href="https://www.youtube.com/channel/UC2wMHF4HBkTMGLsvZAIWzRg" target="_blank" class="white-text"><i class="fab fa-youtube-square fa-4x"></i></a></li>
+		<li></li>
+		<li></li>
+		
+		</ul>
+		</div>
+
+		<div class = "footer-bottom" >
+		    <p>&copy; 2021 summarize koro, Devolped by Summarize Koro team</p>
+        </div>
+		</footer>
+
+		
+		<!-- Footer ends -->
+
+
+
+
+
     
     
       <!--  Scripts-->
@@ -341,6 +452,17 @@
         </script>
      
     <!-- Finished -->
+
+
+
+    
+
+
+
+
+
+
+
     
 </body>
 </html>
