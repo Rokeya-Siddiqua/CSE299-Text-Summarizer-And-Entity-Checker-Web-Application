@@ -1,4 +1,4 @@
-# Brief 
+# Brief introduction:
 
 
 Text summarization is the process of generating a short, fluent, and most importantly accurate summary of a respectively longer text document. The main idea behind our system is to be able to find a summarized text within the given limited lines from 7 different types of text sources e.g. raw text, audio, video, pdf, doc, image or URL and present it in a human-readable format. At the same time, providing people with other facilities e.g. entity checking, finding text type [private, business, etc], learning the key word’s meaning with various information e.g. tag, sentiment, lemma, shape, dependency, etc. As online textual data grows, automatic text summarization and entity checking methods have potential to be very helpful because more useful information can be read in a short time. 
@@ -14,4 +14,3 @@ The objective of automatic text summarization is to condense the origin text int
 
 
 Following this goal, we have developed an NLP model for text summarization and create an end to end web application which can take any raw text, audio, video, pdf/doc, image or URL as input and then, check the line limitation given by the user and finally, generate 4 different summaries from 4 different summarizers to provide the comparison facilities. Entity checker, 4 different text classifiers and word details checker have also provided the best version of Text Summarizer And Entity checker for users from any background. 
-
